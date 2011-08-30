@@ -1,0 +1,272 @@
+#!/bin/sh
+
+#############################################################################################################
+#
+# 	Name: 		GiGit/setup-deploy
+#
+#	Author:		Mardix (http://github.com/mardix - http://twitter.com/mardix)
+#
+#	Since:		Aug 29 2011
+#
+#	Desc:		This script creates of a deployment environment to push content from a staging repo to a production site.
+#
+#				Push your changes to staging first then, run $DeployName.git/deploy . it will push the staging changes to the production site
+#
+#	Link:		http://github.com/mardix/GiGit
+#
+#	Version		1.0
+#
+#	License		MIT
+#
+#	NOTE		Before running this script, make sure its executable. Execute the following command "chmod +x setup-deploy", then run ./setup-deploy
+#
+#   DISCLAIMER	These scripts come without warranty of any kind. Use them at your own risk. I assume no liability for the accuracy, correctness, completeness, or usefulness of any information provided by this site nor for any sort of damages using these scripts may cause.
+#
+#############################################################################################################
+
+
+
+SETUP_DEPLOY_VERSION="1.0"
+
+usage(){
+echo "
+
+=== GiGit/setup-deploy : Help ===
+
+Author:		Mardix (http://github.com/mardix - http://twitter.com/mardix)
+
+Link:		http://github.com/mardix/GiGit
+
+Version:	1.0
+
+This script creates of a deployment environment to push content from a staging repo to a production site.
+
+[Params]
+
+	-f			: force it to create folders and repos that don't exist
+	-n | --name		: the name of the deployment. Will be used to create the bare repo
+	-s | --staging		: The staging directory name from $HOME
+	-p | --production	: The production directy where the files will be pushed from staging to development
+	-h | --help		: The help 
+	
+	
+"
+		
+}
+
+
+
+echo ""
+echo ""
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+echo  "        GiGit/setup-deploy ($SETUP_DEPLOY_VERSION)      "
+
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+echo ""
+
+
+STAGING_REPO=""
+DEPLOY_NAME=""
+PRODUCTION_FOLDER=""
+FORCE="n"
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -s | --staging )    	shift
+                                STAGING_REPO="$HOME/$1"
+                                ;;
+
+		-p | --production )     shift
+								PRODUCTION_FOLDER="$HOME/$1"
+						        ;;	
+													
+        -n | --name )    		shift
+								DEPLOY_NAME="$1"
+                                ;;
+		-f )   					FORCE="y"
+						        ;;
+        -h | --help )           usage
+                                exit
+    esac
+    shift
+done
+
+
+#-------
+
+if [[ "$STAGING_REPO" = "" || "$DEPLOY_NAME" = "" || "$PRODUCTION_FOLDER" = "" ]]; then
+	echo "ERROR: Some command line arguments are missing..."
+	usage
+	exit;
+fi
+
+
+
+
+CUR_DIR="$PWD"
+
+if [ ! -d "$STAGING_REPO" ]; then
+	
+	echo "Staging REPO: $STAGING_REPO doesn't exist "
+	
+
+		if [ "$FORCE" = "y" ]; then
+			mkdir "$STAGING_REPO"
+			echo "$STAGING_REPO created"
+			echo ""
+		
+		else 
+			echo "Can't continue without having the $STAGING_REPO created. Use the flag -f to force its creation"
+			echo ""
+			exit
+			
+		fi
+fi
+
+
+if [ ! -d "$STAGING_REPO/.git" ]; then
+
+	echo "$STAGING_REPO is not a Git repo"
+	
+	
+	if [ "$FORCE" = "y" ]; then
+		
+		echo "Making $STAGING_REPO a Git repo"
+		echo ""
+		cd $STAGING_REPO
+		
+		git init
+		
+		echo ""
+		
+		if [ ! -f "hooks/post-update" ]; then
+			cp "$CUR_DIR/hooks/post-update" ".git/hooks/post-update"
+			chmod +x ".git/hooks/post-update"
+	    fi
+		
+	else
+		echo "Can't continue without $STAGING_REPO being a Git repo. Use the flag -f to force its creation"
+		echo ""
+		exit
+	fi
+fi
+
+
+
+# SETTING THE PRODUCTION FOLDER
+
+
+if [ ! -d "$PRODUCTION_FOLDER" ]; then
+	
+	echo "Production Direction: $PRODUCTION_FOLDER doesn't exist "
+
+		if [ "$FORCE" = "y" ]; then
+			mkdir "$PRODUCTION_FOLDER"
+			echo "$PRODUCTION_FOLDER created"
+			echo ""
+		else 
+			echo "Can't continue without having the PRODUCTION Folder Ready"
+			exit
+			
+		fi
+fi
+
+
+
+
+
+
+# SETTING THE DEPLOY BARE REPO
+
+BARE_REPO="$HOME/$DEPLOY_NAME.git"
+
+# Create BARE_REPO if not exist
+if [ ! -d "$BARE_REPO" ]; then
+	echo "Creating the bare repo: $DEPLOY_NAME.git"
+	
+	mkdir "$BARE_REPO"
+	cd "$BARE_REPO"
+	git init --bare
+	
+	echo ""
+	
+	# HOOKS: Create the hook for the post-receive, which will forward to the PRODUCTION_FOLDER
+	if [ ! -f "hooks/post-receive" ]; then
+
+	echo "
+
+	#!/bin/sh
+
+	GIT_WORK_TREE=$PRODUCTION_FOLDER git checkout -f
+
+	"> hooks/post-receive
+
+	chmod +x hooks/post-receive
+
+
+	# CREATE THE DEPLOY SCRIPT. Called deploy. ie: web.git/deploy
+	echo "
+	#!/bin/sh
+
+	cd $STAGING_REPO
+
+	git push production master
+
+	" > deploy
+
+	chmod +x deploy
+	
+	fi	
+	
+	
+	echo "
+
+	Deploy READ ME
+
+	How to use?
+
+	1.	Push your changes to the Staging repo: '$STAGING_REPO'
+	2.	Then execute the script '$BARE_REPO/deploy', 
+		it will push the recent changes from the Staging '$STAGING_REPO' to Production '$PRODUCTION_FOLDER'
+
+	" > deploy-README	
+fi
+
+
+# ADD THE REMOTE OF BARE IN THE STAGING
+cd $STAGING_REPO
+git remote add production $BARE_REPO
+
+
+
+echo "
+Setup Deploy Created successfully!
+
+---
+
+SUMMARY:
+
+Staging Repo:			 	$STAGING_REPO
+Production Folder:			$PRODUCTION_FOLDER
+Deploy Name:				$DEPLOY_NAME
+
+Deploy Execution:			$BARE_REPO/deploy
+
+-------
+
+Deploy-Setup READ ME
+
+How to use?
+
+1.	Push your changes to the Staging repo: '$STAGING_REPO'
+2.	Then execute the script '$BARE_REPO/deploy', 
+	it will push the recent changes from the Staging '$STAGING_REPO' to Production '$PRODUCTION_FOLDER'
+
+GiGit Out!
+"
+
+exit
+
+
