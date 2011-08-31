@@ -69,7 +69,7 @@ echo ""
 
 STAGING_REPO=""
 DEPLOY_NAME=""
-PRODUCTION_FOLDER=""
+PRODUCTION_DIR=""
 FORCE="n"
 
 # PARAMS
@@ -81,7 +81,7 @@ while [ "$1" != "" ]; do
                                 ;;
 
 		-p | --production )     shift
-								PRODUCTION_FOLDER="$HOME/$1"
+								PRODUCTION_DIR="$HOME/$1"
 						        ;;	
 													
         -n | --name )    		shift
@@ -98,7 +98,7 @@ done
 
 #-------
 # Check arguments
-if [[ "$STAGING_REPO" = "" || "$DEPLOY_NAME" = "" || "$PRODUCTION_FOLDER" = "" ]]; then
+if [[ "$STAGING_REPO" = "" || "$DEPLOY_NAME" = "" || "$PRODUCTION_DIR" = "" ]]; then
 	echo "ERROR: Some command line arguments are missing..."
 	usage
 	exit;
@@ -163,13 +163,13 @@ fi
 # SETTING THE PRODUCTION FOLDER
 
 
-if [ ! -d "$PRODUCTION_FOLDER" ]; then
+if [ ! -d "$PRODUCTION_DIR" ]; then
 	
-	echo "Production Direction: $PRODUCTION_FOLDER doesn't exist "
+	echo "Production Directory: $PRODUCTION_DIR doesn't exist "
 
 		if [ "$FORCE" = "y" ]; then
-			mkdir "$PRODUCTION_FOLDER"
-			echo "$PRODUCTION_FOLDER created"
+			mkdir "$PRODUCTION_DIR"
+			echo "$PRODUCTION_DIR created"
 			echo ""
 		else 
 			echo "Can't continue without having the PRODUCTION Folder Ready"
@@ -197,14 +197,14 @@ if [ ! -d "$BARE_REPO" ]; then
 	
 	echo ""
 	
-	# HOOKS: Create the hook for the post-receive, which will forward to the PRODUCTION_FOLDER
+	# HOOKS: Create the hook for the post-receive, which will forward to the PRODUCTION_DIR
 	if [ ! -f "hooks/post-receive" ]; then
 
 	echo "
 
 	#!/bin/sh
 
-	GIT_WORK_TREE=$PRODUCTION_FOLDER git checkout -f
+	GIT_WORK_TREE=$PRODUCTION_DIR git checkout -f
 
 	"> hooks/post-receive
 
@@ -230,8 +230,20 @@ echo "
 # The Staging Repo
 cd $STAGING_REPO
 
+echo \"
+gigit-deploy
+
+Pushing content from '$STAGING_REPO' to '$PRODUCTION_DIR'
+
+\"
+
 git push production master
 
+echo \"Done!
+
+GiGit out!
+
+\"
 " > gigit-deploy
 
 	chmod +x gigit-deploy
@@ -247,7 +259,7 @@ git push production master
 
 	1.	Push your changes to the Staging repo: '$STAGING_REPO'
 	2.	Then execute the script '$BARE_REPO/gigit-deploy', 
-		it will push the recent changes from the Staging '$STAGING_REPO' to Production '$PRODUCTION_FOLDER'
+		it will push the recent changes from the Staging '$STAGING_REPO' to Production '$PRODUCTION_DIR'
 
 	" > deploy-README	
 fi
@@ -267,7 +279,7 @@ echo "
 SUMMARY:
 
 Staging Repo:			 	$STAGING_REPO
-Production Folder:			$PRODUCTION_FOLDER
+Production Dir:				$PRODUCTION_DIR
 Deploy Name:				$DEPLOY_NAME
 Deploy Execution:			$BARE_REPO/gigit-deploy
 
@@ -279,7 +291,7 @@ How to use?
 
 1.	Push your changes to the Staging repo: '$STAGING_REPO' with normal git push
 2.	Then execute the script '$BARE_REPO/gigit-deploy', 
-	it will push the recent changes from the Staging '$STAGING_REPO' to Production '$PRODUCTION_FOLDER'
+	it will push the recent changes from the Staging '$STAGING_REPO' to Production '$PRODUCTION_DIR'
 
 GiGit Out!
 "
