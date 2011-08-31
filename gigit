@@ -72,6 +72,8 @@ DEPLOY_NAME=""
 PRODUCTION_FOLDER=""
 FORCE="n"
 
+# PARAMS
+
 while [ "$1" != "" ]; do
     case $1 in
         -s | --staging )    	shift
@@ -95,7 +97,7 @@ done
 
 
 #-------
-
+# Check arguments
 if [[ "$STAGING_REPO" = "" || "$DEPLOY_NAME" = "" || "$PRODUCTION_FOLDER" = "" ]]; then
 	echo "ERROR: Some command line arguments are missing..."
 	usage
@@ -106,6 +108,9 @@ fi
 
 
 CUR_DIR="$PWD"
+
+
+# SETTING STAGING
 
 if [ ! -d "$STAGING_REPO" ]; then
 	
@@ -214,11 +219,13 @@ echo "
 # gigit-deploy
 #
 # Author: Mardix
-# Version: SETUP_DEPLOY_VERSION
+# Version: $SETUP_DEPLOY_VERSION
 # Description: This script copy the changes from the Staging Repo to the Production one
 # Info: http://github.com/mardix/GiGit
-# DISCLAIMER: These scripts come without warranty of any kind. Use them at your own risk. I assume no liability for the accuracy, correctness, completeness, or usefulness of any information provided by this site nor for any sort of damages using these scripts may cause.
+# DISCLAIMER: This script come without warranty of any kind. Use them at your own risk. I assume no liability for the accuracy, correctness, completeness, or usefulness of any information provided by this site nor for any sort of damages using these scripts may cause.
 #
+# Execute: ./gigit-deploy
+# 
 
 # The Staging Repo
 cd $STAGING_REPO
@@ -253,7 +260,7 @@ git remote add production $BARE_REPO
 
 
 echo "
-Setup Deploy Created successfully!
+'$BARE_REPO/gigit-deploy' Created successfully!
 
 ---
 
@@ -262,7 +269,6 @@ SUMMARY:
 Staging Repo:			 	$STAGING_REPO
 Production Folder:			$PRODUCTION_FOLDER
 Deploy Name:				$DEPLOY_NAME
-
 Deploy Execution:			$BARE_REPO/gigit-deploy
 
 -------
@@ -271,7 +277,7 @@ Deploy-Setup READ ME
 
 How to use?
 
-1.	Push your changes to the Staging repo: '$STAGING_REPO'
+1.	Push your changes to the Staging repo: '$STAGING_REPO' with normal git push
 2.	Then execute the script '$BARE_REPO/gigit-deploy', 
 	it will push the recent changes from the Staging '$STAGING_REPO' to Production '$PRODUCTION_FOLDER'
 
