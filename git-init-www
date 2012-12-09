@@ -1,29 +1,49 @@
-!/bin/sh
+#!/bin/sh
+
 ################################################################################
-# git-init-www
-# On Centos I use git to push updates to my sites in /home
-# This script sets up a bare repo under /home/<user>/www.git to push to, 
-# On push, it will checkout the content to /home/<user>/public_html
+#                               git-init-www
 #
-# Set this script as executable: chmod +x git-init-www
-# > ./git-init-www <user>
+# git-init-www set up a bare repo at '/home/<user>/www.git' to deploy to 
+# '/home/<user>/public_html' whenever there is a push
 #
-# Push to our repo
-# > git remote add origin ssh://user@domain/path/www.git
+# Requirements:
+# - Centos 6.x (tested on centos 6)
+# - Git
+#
+# ** Set this script as executable: 
+# > chmod +x git-init-www
+#
+# ** Execute
+# ./git-init-www <user>
+#
+# Push to our repo with shh
+# > git remote add origin ssh://user@domain/home/<user>/www.git
 # > git push origin master
 #
 # @author: Mardix <http://github.com/mardix>
 # @Since: Nov 17 2012
 #
-# ** Tested on CENTOS 6 only
+# Version: 1.1 (Dec 9 2012)
 ################################################################################
 
-USERHOME="/home/$1"
-PUBLIC_DIR="$USERHOME/public_html"
-BARE_REPO="$USERHOME/www.git"
+usage(){
+echo "
+USAGE: ./git-init-www <user>
+"
+}
 
-if [ ! -d "$USERHOME" ]; then
-        echo "Directory: '$USERHOME' doesn't exist"
+if [ -z "$1" ]; then
+    usage
+    exit;
+fi
+
+
+USER_HOME="/home/$1"
+PUBLIC_DIR="$USER_HOME/public_html"
+BARE_REPO="$USER_HOME/www.git"
+
+if [ ! -d "$USER_HOME" ]; then
+        echo "Directory: '$USER_HOME' doesn't exist"
         exit
 fi
 
