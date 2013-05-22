@@ -1,0 +1,38 @@
+#!/bin/sh
+
+#
+# cron-setup-domain
+# To add a new domain in the /home/$domain
+# The user will include public_html and www.git
+# Script was created for the CRON server
+# Tested on CENTOS 6.x
+# Since May 22 2013
+#
+
+echo "
+CRON SETUP DOMAIN: "
+
+usage(){
+echo "
+USAGE: ./cron-setup-domain <domain.com>
+"
+}
+
+if [ -z "$1" ]; then
+    usage
+    exit;
+fi
+
+
+DOMAIN_HOME="/home/$1/public_html"
+
+echo "$1"
+
+mkdir -p "$DOMAIN_HOME"
+
+sh ./git-init-www "$1"
+
+echo "
+DONE
+
+"
